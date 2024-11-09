@@ -2,6 +2,8 @@
 % outputtemplate := "fig%c.eps";
 % outputformat := "eps";
 
+input TEX 
+
 % ------------------------------------------------------------------------------
 %  Global settings
 % ------------------------------------------------------------------------------
@@ -11,6 +13,7 @@
 
 % Default line width
 default_pen_width = 1bp;
+default_half_width = .5bp;
 
 % Default ratio of (radius of joint)/(width of link)
 default_ratio_rw = .8;
@@ -124,6 +127,28 @@ enddef;
 
 
 % ------------------------------------------------------------------------------
+%  Macro definition: draw_centerline
+% ------------------------------------------------------------------------------
+def draw_centerline (expr length, T, offset, line_length) =
+  % Parameters
+  %       length: length of the link
+  %        width: width of the link
+  %            T: transformation matrix
+  %  line_length: length of the center line of the link
+  begingroup
+    picture centerline;
+    centerline := image (
+      pickup pencircle scaled default_half_width;
+      draw (length+offset, 0)--(length+line_length, 0) withcolor plmc_current_color dashed evenly;
+      pickup defaultpen;
+    );
+
+    draw centerline transformed T;
+  endgroup
+enddef;
+
+
+% ------------------------------------------------------------------------------
 %  Macro definition: draw_joint
 % ------------------------------------------------------------------------------
 def draw_joint (expr r, T) =
@@ -184,6 +209,14 @@ enddef;
 % ------------------------------------------------------------------------------
 %  Macro definition: draw_current_serial_chain
 % ------------------------------------------------------------------------------
+% Draws a serial chain whose parameters are given with the following external 
+% variables.
+%
+% N: degrees of freedom 
+% q: joint angles 
+% l: length of each link 
+% w: width of each link 
+%
 def draw_current_serial_chain (expr show_lframe) =
   begingroup
     % Recursive transformation and drawing
@@ -208,6 +241,58 @@ def draw_current_serial_chain (expr show_lframe) =
       if show_lframe:
         draw_local_axes (u, T[i]);
       fi
+    endfor
+
+  endgroup
+enddef;
+
+
+% ------------------------------------------------------------------------------
+%  Macro definition: draw_current_serial_chain_annotated
+% ------------------------------------------------------------------------------
+% Draws a serial chain whose parameters are given with the following external 
+% variables with annotation.
+%
+% N: degrees of freedom 
+% q: joint angles 
+% l: length of each link 
+% w: width of each link 
+%
+def draw_current_serial_chain_annotated (expr show_lframe, offset, centerline_length) =
+  begingroup
+    % Recursive transformation and drawing
+    transform T[];
+    T0 = identity shifted base_origin;
+    for i=1 upto N:
+      qq := 0;
+      for j=1 upto (i-1):
+        qq := qq + q[j];
+      endfor
+      T[i] = T[i-1] shifted -(xpart T[i-1], ypart T[i-1]) % Back to global origin
+          rotated q[i]                                    % Rotate
+          shifted (xpart T[i-1], ypart T[i-1])            % Back to local origin
+          shifted ((l[i-1],0) rotated qq);                % Move to the next local origin
+    endfor
+
+    % Draw base reference of angular displacement
+    draw_centerline(0, T0, offset, centerline_length);
+
+    for i=1 upto N-1:
+      draw_centerline (l[i], T[i], offset, centerline_length);
+    endfor
+
+    % Draw the serial chain
+    draw_current_serial_chain (show_lframe);
+
+    % Mark angles 
+    $ := 1;
+    for i=1 upto N:
+      r := .4l[i];
+      label.rt(TEX("$\theta_" & decimal $ & "$"),
+        (r, -.5r*q[i] * 3.14 / 180) transformed T[i]);
+      label.ulft(TEX("$\tau_" & decimal $ & "$"),
+        (0,8pt) transformed T[i]);
+      $ := incr($);
     endfor
 
   endgroup
