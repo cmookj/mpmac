@@ -6,7 +6,7 @@
 % Changmook Chun (c) 2021
 %
 
-% Utilities
+% Calculate the norm of a vector
 def norm(suffix vec) =
 begingroup
     save norm_of_vec;
@@ -15,6 +15,7 @@ begingroup
 endgroup
 enddef;
 
+% Cross-product of two 3-dim vectors
 def cross(suffix u, v) =
 begingroup
     save cp;
