@@ -292,3 +292,22 @@ enddef;
 def draw_spring_xbold (expr b, f, n, w) =
   draw_spring (b, f, n, w, plmc_line_width_xbold);
 enddef;
+
+% Draw circular arc with arrow
+%
+%  This macro draws a circular arc with an arrow, to represent, e.g., motor 
+%  torque.
+def draw_circular_arc_with_arrow (expr r, c, b_ang, open_ang, cw_dir, lwidth) =
+  begingroup 
+    path pp, qq;
+
+    pp = halfcircle scaled 2r;
+    qq = halfcircle scaled 2r rotated (180 - open_ang);
+
+    if cw_dir:
+      drawarrow pp reverse;
+      draw qq;
+    fi
+
+  endgroup
+enddef;
